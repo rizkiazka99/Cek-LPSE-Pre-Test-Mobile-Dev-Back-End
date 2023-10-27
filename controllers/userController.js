@@ -183,7 +183,7 @@ class UserController {
                     })
                 } else {
                     response.status(400).json({
-                        status: true,
+                        status: false,
                         message: 'Failed to update your profile'
                     })
                 }
@@ -218,6 +218,56 @@ class UserController {
                 })
             }
         } catch(err) {
+            response.status(500).json({
+                status: false,
+                message: String(err)
+            })
+        }
+    }
+
+    static async deleteProfile(request, response) {
+        try {
+            const idAuth = request.userData.id
+            const id = request.params.id
+
+            if (idAuth !== id) {
+                response.status(403).json({
+                    status: false,
+                    message: 'You are not the authorized user'
+                })
+            } else {
+                let user = await User.findByPk(id)
+
+                if (user) {
+                    let result = await User.destroy({
+                        where: { id }
+                    })
+    
+                    if (result === 1) {
+                        if (user.profile_picture !== 'https://cdn-icons-png.flaticon.com/512/5556/5556468.png'
+                                && user.profile_picture !== 'https://cdn-icons-png.flaticon.com/512/7127/7127281.png'
+                        ) {
+                            deleteFile(user.profile_picture)
+                        }
+    
+                        response.status(200).json({
+                            status: true,
+                            message: 'Thank you for your time with us and we hope this isn\'t a goodbye'
+                        })
+                    } else {
+                        response.status(400).json({
+                            status: false,
+                            message: 'Failed to delete your profile'
+                        })
+                    }
+                } else {
+                    response.status(404).json({
+                        status: false,
+                        message: 'Couldn\'t find any profile with this ID'
+                    })
+                }
+            }
+        } catch {
             response.status(500).json({
                 status: false,
                 message: String(err)
